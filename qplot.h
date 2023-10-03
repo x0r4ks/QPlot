@@ -5,8 +5,12 @@
 #include <QVector>
 #include <QListWidgetItem>
 #include <QList>
-//#include "muparser/muParser.h"
 #include <muparser/muParser.h>
+
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+
 #include "graph_vect.h"
 
 
@@ -30,10 +34,15 @@ private slots:
 
     void on_lv_functions_view_itemDoubleClicked(QListWidgetItem *item);
 
+    void action_save();
+    void action_save_as();
+    void action_open();
+
 private:
     Ui::qplot *ui;
     int N;
     double xBegin, xEnd, step;
+    QString project_name = " ";
 
     QList<QString> formuls;
     QList<QColor> colors;

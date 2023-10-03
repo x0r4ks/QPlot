@@ -83,3 +83,5 @@ DISTFILES += \
     libmuParse.so \
     muParser.dll
 
+RESOURCES += resources.qrc
+
