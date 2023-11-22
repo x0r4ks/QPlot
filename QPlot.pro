@@ -21,6 +21,7 @@ SOURCES += \
     qcustomplot.cpp \
     qplot.cpp
 }
+
 unix {
 SOURCES += \
     graph_vect.cpp \
@@ -66,6 +67,7 @@ HEADERS += \
 }
 
 FORMS += \
+    editdialog.ui \
     qplot.ui
 
 TRANSLATIONS += \
@@ -84,4 +86,10 @@ DISTFILES += \
     muParser.dll
 
 RESOURCES += resources.qrc
+
+HEADERS += \
+    editdialog.h
+
+SOURCES += \
+    editdialog.cpp
 

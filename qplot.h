@@ -12,6 +12,7 @@
 #include <QJsonArray>
 
 #include "graph_vect.h"
+#include <editdialog.h>
 
 
 
@@ -32,16 +33,23 @@ private slots:
 
     void on_btn_add_func_clicked();
 
-    void on_lv_functions_view_itemDoubleClicked(QListWidgetItem *item);
+//    void on_lv_functions_view_itemDoubleClicked(QListWidgetItem *item);
 
     void action_save();
     void action_save_as();
     void action_open();
+    void action_create();
+
+    void slotCustomMenuRequested(QPoint pos);
 
 private:
     Ui::qplot *ui;
     int N;
     double xBegin, xEnd, step;
+    bool isSaveProject = true;
+
+    editDialog *editdialog;
+
     QString project_name = " ";
 
     QList<QString> formuls;
@@ -49,6 +57,8 @@ private:
     QList<graph_vect> graphs;
 
     graph_vect create_graph(QString expression);
+
+
 
 
 };

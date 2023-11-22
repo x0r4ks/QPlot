@@ -11,9 +11,16 @@ qplot::qplot(QWidget *parent)
     QIcon icon(":/icons/icons/appicon.svg");
     this->setWindowIcon(icon);
 
+    editdialog = new editDialog(this);
+
     connect(ui->actionSave, &QAction::triggered, this, &qplot::action_save);
     connect(ui->actionSave_As, &QAction::triggered, this, &qplot::action_save_as);
     connect(ui->actionOpen, &QAction::triggered, this, &qplot::action_open);
+    connect(ui->actionCreate, &QAction::triggered, this, &qplot::action_create);
+
+    ui->lv_functions_view->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->lv_functions_view, &QListWidget::customContextMenuRequested,this,&qplot::slotCustomMenuRequested);
+
 
     if (ui->sb_step->value() == 0) {
         ui->sb_step->setValue(0.01);
@@ -25,6 +32,12 @@ qplot::qplot(QWidget *parent)
 
     ui->settings_widget->setHidden(true);
     ui->plotWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+    ui->plotWidget->xAxis->setLabel("x");
+    ui->plotWidget->yAxis->setLabel("y");
+
+
+    ui->plotWidget->replot();
+
 
 }
 
@@ -114,24 +127,11 @@ void qplot::on_btn_add_func_clicked()
             }
 
             ui->plotWidget->replot();
+            this->isSaveProject = false;
         }
     }
 }
 
-
-void qplot::on_lv_functions_view_itemDoubleClicked(QListWidgetItem *item)
-{
-    int i = ui->lv_functions_view->currentRow();
-
-    QListWidgetItem *it = ui->lv_functions_view->takeItem(ui->lv_functions_view->currentRow());
-    delete it;
-
-    this->graphs.removeAt(i);
-    this->colors.removeAt(i);
-    this->formuls.removeAt(i);
-    ui->plotWidget->removeGraph(i);
-    ui->plotWidget->replot();
-}
 
 void qplot::action_save()
 {
@@ -159,6 +159,7 @@ void qplot::action_save()
         f.open(QIODevice::WriteOnly);
         f.write(document.toJson());
         f.close();
+        this->isSaveProject  = true;
     } else {
         this->action_save_as();
     }
@@ -189,51 +190,168 @@ void qplot::action_save_as()
     f.open(QIODevice::WriteOnly);
     f.write(document.toJson());
     f.close();
+    this->isSaveProject  = true;
 }
 
 void qplot::action_open()
 {
-    project_name = QFileDialog::getOpenFileName(this, tr("Open"), "", "JSON (*.json)");
-    QFile f;
-    f.setFileName(project_name);
-    f.open(QIODevice::ReadOnly);
-    QJsonDocument document = QJsonDocument::fromJson(f.readAll());
-    f.close();
+    QString new_project_name = QFileDialog::getOpenFileName(this, tr("Open"), "", "JSON (*.json)");
 
-    QJsonObject object = document.object();
-    this->formuls.clear();
-    this->colors.clear();
-    this->graphs.clear();
-    ui->plotWidget->clearGraphs();
+    if (this->project_name == new_project_name) {
 
-    for (int i = 0; i < object.length(); i++) {
-        ui->lv_functions_view->addItem("y = " + object.keys().at(i));
+        QMessageBox::information(this, tr("Info"), tr("This file is opened."));
+    } else {
+        project_name = new_project_name;
+        QFile f;
+        f.setFileName(project_name);
+        f.open(QIODevice::ReadOnly);
+        QJsonDocument document = QJsonDocument::fromJson(f.readAll());
+        f.close();
 
-        this->formuls.push_back(object.keys().at(i));
-        graphs.push_back(create_graph(object.keys().at(i)));
-        QColor color;
-        QList<QString> st = object.value(object.keys().at(i)).toString().split(' ');
-        color.setRed(st.at(0).toInt());
-        color.setGreen(st.at(1).toInt());
-        color.setBlue(st.at(2).toInt());
+        QJsonObject object = document.object();
+
+        this->formuls.clear();
+        this->colors.clear();
+        this->graphs.clear();
+
+        ui->plotWidget->clearGraphs();
+        ui->plotWidget->clearItems();
+
+        this->formuls = QList<QString>();
+        this->colors = QList<QColor>();
+        this->graphs = QList<graph_vect>();
+        ui->lv_functions_view->clear();
+
+
+        for (int i = 0; i < object.length(); i++) {
+            ui->lv_functions_view->addItem("y = " + object.keys().at(i));
+
+            this->formuls.push_back(object.keys().at(i));
+            graphs.push_back(create_graph(object.keys().at(i)));
+            QColor color;
+            QList<QString> st = object.value(object.keys().at(i)).toString().split(' ');
+            color.setRed(st.at(0).toInt());
+            color.setGreen(st.at(1).toInt());
+            color.setBlue(st.at(2).toInt());
 
 
 
-        this->colors.push_back(color);
-        ui->plotWidget->addGraph();
+            this->colors.push_back(color);
+            ui->plotWidget->addGraph();
+        }
+
+        QPen pen;
+        pen.setWidth(1);
+
+        for(int i = 0; i < ui->lv_functions_view->count(); i++) {
+            ui->plotWidget->graph(i)->addData(graphs.at(i).x, graphs.at(i).y);
+            pen.setColor(colors.at(i));
+            ui->plotWidget->graph(i)->setPen(pen);
+        }
+        ui->plotWidget->replot();
+        this->isSaveProject  = false;
     }
-
-
-
-
-    QPen pen;
-    pen.setWidth(1);
-
-    for(int i = 0; i < ui->lv_functions_view->count(); i++) {
-        ui->plotWidget->graph(i)->addData(graphs.at(i).x, graphs.at(i).y);
-        pen.setColor(colors.at(i));
-        ui->plotWidget->graph(i)->setPen(pen);
-    }
-    ui->plotWidget->replot();
 }
 
+void qplot::action_create()
+{
+    if (this->isSaveProject)
+    {
+        this->project_name = " ";
+
+        this->formuls.clear();
+        this->colors.clear();
+        this->graphs.clear();
+
+        ui->plotWidget->clearGraphs();
+        ui->plotWidget->clearItems();
+
+        this->formuls = QList<QString>();
+        this->colors = QList<QColor>();
+        this->graphs = QList<graph_vect>();
+        ui->lv_functions_view->clear();
+        ui->plotWidget->replot();
+    } else {
+        if (QMessageBox::question(this, tr("Warning"), tr("This project not save.\nSave?")) == QMessageBox::Yes) {
+            this->action_save_as();
+
+            this->project_name = " ";
+
+            this->formuls.clear();
+            this->colors.clear();
+            this->graphs.clear();
+
+            ui->plotWidget->clearGraphs();
+            ui->plotWidget->clearItems();
+
+            this->formuls = QList<QString>();
+            this->colors = QList<QColor>();
+            this->graphs = QList<graph_vect>();
+            ui->lv_functions_view->clear();
+            ui->plotWidget->replot();
+
+        }
+    }
+}
+
+void qplot::slotCustomMenuRequested(QPoint pos)
+{
+    QMenu *menu = new QMenu(this);
+    QAction* remove_sub_action = new QAction(tr("Remove"), this);
+    QAction* edit_sub_menu = new QAction(tr("Edit"), this);
+
+    menu->addAction(remove_sub_action);
+    menu->addAction(edit_sub_menu);
+
+    connect(remove_sub_action, &QAction::triggered, this, [this]{
+        int i = ui->lv_functions_view->currentRow();
+
+        QListWidgetItem *it = ui->lv_functions_view->takeItem(ui->lv_functions_view->currentRow());
+
+        delete it;
+
+        this->graphs.removeAt(i);
+        this->colors.removeAt(i);
+        this->formuls.removeAt(i);
+        ui->plotWidget->removeGraph(i);
+        ui->plotWidget->replot();
+        this->isSaveProject = false;
+    });
+
+    connect(edit_sub_menu, &QAction::triggered, this, [this]{
+        int i = ui->lv_functions_view->currentRow();
+        bool f = true;
+        editdialog->setColor(this->colors.at(i));
+        editdialog->setFormul(this->formuls.at(i));
+        if (editdialog->exec()) {
+
+            try {
+                mu::Parser s;
+                double a = 1;
+                s.DefineVar("x", &a);
+                s.SetExpr(editdialog->getFormul().toStdString());
+                s.Eval();
+
+            } catch(mu::Parser::exception_type &e) {
+                f = false;
+                QString str = tr("The function you entered is not correct.");
+                str = str + "\n" + QString::fromStdString(e.GetMsg());
+                QMessageBox::critical(this, tr("Error"), str);
+            }  if (f) {
+
+                this->colors[i] = editdialog->getColor();
+                this->formuls[i] = editdialog->getFormul();
+                this->graphs[i] = create_graph(this->formuls.at(i));
+
+                ui->lv_functions_view->item(i)->setText("y = " + this->formuls.at(i));
+
+    //            ui->lv_functions_view->e
+                ui->plotWidget->graph(i)->setData(this->graphs.at(i).x, this->graphs.at(i).y);
+                ui->plotWidget->replot();
+                this->isSaveProject = false;
+            }
+        }
+    });
+
+    menu->popup(ui->lv_functions_view->mapToGlobal(pos));
+}
