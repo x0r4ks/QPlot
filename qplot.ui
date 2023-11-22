@@ -75,6 +75,17 @@
              <item>
               <widget class="QLineEdit" name="le_func"/>
              </item>
+             <item>
+              <widget class="QPushButton" name="btn_not_math">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="resources.qrc">
+                 <normaloff>:/icons/icons/pencil.svg</normaloff>:/icons/icons/pencil.svg</iconset>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>
@@ -218,6 +229,9 @@
            <widget class="QPushButton" name="btn_add_func">
             <property name="text">
              <string>Add Function</string>
+            </property>
+            <property name="shortcut">
+             <string>Return</string>
             </property>
            </widget>
           </item>

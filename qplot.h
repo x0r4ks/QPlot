@@ -13,7 +13,7 @@
 
 #include "graph_vect.h"
 #include <editdialog.h>
-
+#include <editror.h>
 
 
 QT_BEGIN_NAMESPACE
@@ -42,6 +42,8 @@ private slots:
 
     void slotCustomMenuRequested(QPoint pos);
 
+    void on_btn_not_math_clicked(bool checked);
+
 private:
     Ui::qplot *ui;
     int N;
@@ -49,6 +51,7 @@ private:
     bool isSaveProject = true;
 
     editDialog *editdialog;
+    editror *Editor;
 
     QString project_name = " ";
 
@@ -57,6 +60,8 @@ private:
     QList<graph_vect> graphs;
 
     graph_vect create_graph(QString expression);
+
+
 
 
 

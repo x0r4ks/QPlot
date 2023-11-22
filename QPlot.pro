@@ -68,6 +68,7 @@ HEADERS += \
 
 FORMS += \
     editdialog.ui \
+    editror.ui \
     qplot.ui
 
 TRANSLATIONS += \
@@ -88,8 +89,10 @@ DISTFILES += \
 RESOURCES += resources.qrc
 
 HEADERS += \
-    editdialog.h
+    editdialog.h \
+    editror.h
 
 SOURCES += \
-    editdialog.cpp
+    editdialog.cpp \
+    editror.cpp
 

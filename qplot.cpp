@@ -12,6 +12,7 @@ qplot::qplot(QWidget *parent)
     this->setWindowIcon(icon);
 
     editdialog = new editDialog(this);
+    Editor = new editror(this);
 
     connect(ui->actionSave, &QAction::triggered, this, &qplot::action_save);
     connect(ui->actionSave_As, &QAction::triggered, this, &qplot::action_save_as);
@@ -46,6 +47,23 @@ qplot::~qplot()
     delete ui;
 }
 
+
+double randint(double min = 0, double max = 100, double x = 0)
+{
+    srand(time(NULL) + rand() + x);
+    return (double)(((int)rand() % (int)(max - min)) + min);
+}
+
+double toRad(double x)
+{
+    return x * (M_PI/180);
+}
+
+double toDeg(double x)
+{
+    return x * (180/M_PI);
+}
+
 graph_vect qplot::create_graph(QString expression)
 {
 
@@ -56,6 +74,12 @@ graph_vect qplot::create_graph(QString expression)
 
 
     mu::Parser p;
+    p.DefineFun("rnd", randint);
+
+    p.DefineFun("rad", toRad);
+    p.DefineFun("deg", toDeg);
+
+
     p.DefineVar("x", &var_X);
     p.SetExpr(expression.toStdString());
 
@@ -92,6 +116,9 @@ void qplot::on_btn_add_func_clicked()
         try {
             mu::Parser s;
             double a = 1;
+            s.DefineFun("rnd", randint);
+            s.DefineFun("rad", toRad);
+            s.DefineFun("deg", toDeg);
             s.DefineVar("x", &a);
             s.SetExpr(expression.toStdString());
             s.Eval();
@@ -170,7 +197,7 @@ void qplot::action_save()
 
 void qplot::action_save_as()
 {
-    project_name = QFileDialog::getSaveFileName(this, tr("Save"), "", "JSON (*.json)");
+    project_name = QFileDialog::getSaveFileName(this, tr("Save"), "", "QPLOT (*.qplot)");
 
 
     QJsonDocument document;
@@ -195,7 +222,7 @@ void qplot::action_save_as()
 
 void qplot::action_open()
 {
-    QString new_project_name = QFileDialog::getOpenFileName(this, tr("Open"), "", "JSON (*.json)");
+    QString new_project_name = QFileDialog::getOpenFileName(this, tr("Open"), "", "QPLOT (*.qplot)");
 
     if (this->project_name == new_project_name) {
 
@@ -328,6 +355,10 @@ void qplot::slotCustomMenuRequested(QPoint pos)
             try {
                 mu::Parser s;
                 double a = 1;
+                s.DefineFun("rnd", randint);
+                s.DefineFun("rad", toRad);
+                s.DefineFun("deg", toDeg);
+
                 s.DefineVar("x", &a);
                 s.SetExpr(editdialog->getFormul().toStdString());
                 s.Eval();
@@ -345,8 +376,15 @@ void qplot::slotCustomMenuRequested(QPoint pos)
 
                 ui->lv_functions_view->item(i)->setText("y = " + this->formuls.at(i));
 
-    //            ui->lv_functions_view->e
+
+                QPen pen;
+                pen.setWidth(1);
+
                 ui->plotWidget->graph(i)->setData(this->graphs.at(i).x, this->graphs.at(i).y);
+
+                pen.setColor(colors.at(i));
+                ui->plotWidget->graph(i)->setPen(pen);
+
                 ui->plotWidget->replot();
                 this->isSaveProject = false;
             }
@@ -355,3 +393,15 @@ void qplot::slotCustomMenuRequested(QPoint pos)
 
     menu->popup(ui->lv_functions_view->mapToGlobal(pos));
 }
+
+void qplot::on_btn_not_math_clicked(bool checked)
+{
+    Editor->clear();
+
+    if (Editor->exec() == 1){
+        QString term = Editor->getTernar();
+
+        ui->le_func->setText(term);
+    }
+}
+
