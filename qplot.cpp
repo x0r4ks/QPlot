@@ -87,6 +87,7 @@ graph_vect qplot::create_graph(QString expression)
         var_X = X;
         V.x.push_back(X);
         V.y.push_back(p.Eval());
+
     }
     return V;
 
