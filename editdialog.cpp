@@ -1,9 +1,9 @@
 #include "editdialog.h"
 #include "ui_editdialog.h"
 
-editDialog::editDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::editDialog)
+editDialog::editDialog(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::editDialog)
 {
     ui->setupUi(this);
 }
@@ -28,7 +28,6 @@ void editDialog::on_buttonBox_clicked(QAbstractButton *button)
     formul = ui->le_formul->text();
     color = QColor(ui->sb_red->value(), ui->sb_green->value(), ui->sb_blue->value());
 }
-
 
 void editDialog::setColor(QColor color)
 {

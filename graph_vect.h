@@ -5,7 +5,7 @@
 class graph_vect
 {
 public:
-    QVector<double> x,y;
+    QVector<double> x, y;
     graph_vect();
 };
 

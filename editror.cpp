@@ -1,10 +1,10 @@
 #include "editror.h"
-#include "ui_editror.h"
 #include <QDebug>
+#include "ui_editror.h"
 
-editror::editror(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::editror)
+editror::editror(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::editror)
 {
     ui->setupUi(this);
 }
@@ -13,7 +13,6 @@ editror::~editror()
 {
     delete ui;
 }
-
 
 void editror::clear()
 {
@@ -25,18 +24,14 @@ QString editror::getTernar()
     QString plainText = ui->textEdit->toPlainText();
     QList<QString> lines = plainText.split('\n');
     QList<QString> line;
-    QString res ="";
+    QString res = "";
 
-    for (int i = 0; i < lines.size(); i++)
-    {
+    for (int i = 0; i < lines.size(); i++) {
         line = lines.at(i).split(" ");
-        for (int j = 0; j < line.size(); j++)
-        {
-
+        for (int j = 0; j < line.size(); j++) {
             if (line.at(j) == "if") {
                 res += "(";
-                for (int jk = j+1; jk < line.size(); jk++)
-                {
+                for (int jk = j + 1; jk < line.size(); jk++) {
                     res += line.at(jk);
                 }
                 res += ")?";
@@ -46,11 +41,9 @@ QString editror::getTernar()
                 res += ":";
                 break;
             } else {
-                res += "("+line.at(j)+")";
+                res += "(" + line.at(j) + ")";
             }
         }
     }
     return res;
-
-
 }

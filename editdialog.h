@@ -1,10 +1,10 @@
 #ifndef EDITDIALOG_H
 #define EDITDIALOG_H
 
+#include <QColor>
 #include <QDialog>
 #include <QPushButton>
 #include <QString>
-#include <QColor>
 
 namespace Ui {
 class editDialog;
@@ -30,7 +30,7 @@ private slots:
 private:
     Ui::editDialog *ui;
     QString formul = "";
-    QColor color = QColor(0,0,0);
+    QColor color = QColor(0, 0, 0);
 };
 
 #endif // EDITDIALOG_H

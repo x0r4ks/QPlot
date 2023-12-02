@@ -2,8 +2,8 @@
 #define EDITROR_H
 
 #include <QDialog>
-#include <QString>
 #include <QPushButton>
+#include <QString>
 
 namespace Ui {
 class editror;

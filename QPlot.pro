@@ -6,10 +6,17 @@ LIBS += -static-libgcc \
         -lmuparser
 }
 
+unix {
+LIBS += -ldl
+}
+
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
+
+win32:RC_ICONS += ./icons/appicon.svg
+unix:ICON += ./icons/appicon.svg
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -19,7 +26,10 @@ SOURCES += \
     graph_vect.cpp \
     main.cpp \
     qcustomplot.cpp \
-    qplot.cpp
+    qplot.cpp \
+    editdialog.cpp \
+    editror.cpp
+
 }
 
 unix {
@@ -36,14 +46,20 @@ SOURCES += \
     muparser/muParserError.cpp \
     muparser/muParserInt.cpp \
     muparser/muParserTest.cpp \
-    muparser/muParserTokenReader.cpp
+    muparser/muParserTokenReader.cpp \
+    editdialog.cpp \
+    editror.cpp
+
 }
 
 win32 {
 HEADERS += \
     graph_vect.h \
     qcustomplot.h \
-    qplot.h
+    qplot.h \
+    editdialog.h \
+    editror.h
+
 }
 
 unix {
@@ -63,7 +79,9 @@ HEADERS += \
     muparser/muParserToken.h \
     muparser/muParserTokenReader.h \
     qcustomplot.h \
-    qplot.h
+    qplot.h \
+    editdialog.h \
+    editror.h
 }
 
 FORMS += \
@@ -88,11 +106,5 @@ DISTFILES += \
 
 RESOURCES += resources.qrc
 
-HEADERS += \
-    editdialog.h \
-    editror.h
 
-SOURCES += \
-    editdialog.cpp \
-    editror.cpp
 
