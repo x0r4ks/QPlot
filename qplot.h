@@ -18,7 +18,11 @@
 #include "graph_vect.h"
 #include <editdialog.h>
 #include <editror.h>
+
 #include "qcustomplot.h"
+#include "qcustomplot.h"
+#include "formulelement.h"
+#include "promrules.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -39,8 +43,6 @@ private slots:
 
     void on_btn_add_func_clicked();
 
-    //    void on_lv_functions_view_itemDoubleClicked(QListWidgetItem *item);
-
     void action_save();
     void action_save_as();
     void action_open();
@@ -48,7 +50,7 @@ private slots:
 
     void slotCustomMenuRequested(QPoint pos);
 
-    void on_btn_not_math_clicked(bool checked);
+    void on_btn_not_math_clicked();
     void on_new_color_clicked();
 
     void on_action_Qt_triggered();
@@ -56,11 +58,6 @@ private slots:
     void on_action_triggered();
 
     void on_action_2_triggered();
-
-
-
-
-
 
 private:
     Ui::qplot *ui;
@@ -88,5 +85,7 @@ private:
 
     void update_color_button();
     void update_from_ram();
+
+    QListWidgetItem* createElement(QString expression, QColor color, QString path_to_icon);
 };
 #endif // QPLOT_H

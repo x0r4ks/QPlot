@@ -1,13 +1,12 @@
 #include "qplot.h"
-#include "promrules.h"
+
 #include <QAction>
 #include <QDebug>
 #include <QMessageBox>
 #include <QProcess>
 #include "ui_qplot.h"
-#include "formulelement.h"
-#include "qcustomplot.h"
-#include "rootsforms.h"
+
+
 void qplot::update_color_button() {
     QString style = "background-color: rgb(";
     style += QString::number(new_graph_color.red());
@@ -19,9 +18,13 @@ void qplot::update_color_button() {
     ui->new_color->setStyleSheet(style);
 }
 
-double qplot::plugin_load(const char *path, double x)
+QListWidgetItem* qplot::createElement(QString expression, QColor color, QString path_to_icon)
 {
-
+    QListWidgetItem *a = new QListWidgetItem();
+    a->setBackground(QBrush(color));
+    a->setText("y = " + expression);
+    a->setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/" + path_to_icon));
+    return a;
 }
 
 qplot::qplot(QWidget *parent)
@@ -40,11 +43,6 @@ qplot::qplot(QWidget *parent)
 
 
     QString icon_prefis = QFileInfo(qApp->arguments().at(0)).path() + "/icons/";
-
-
-
-
-
 
 #ifdef linux
     this->setWindowIcon(QIcon(icon_prefis + "appicon.svg"));
@@ -109,15 +107,16 @@ qplot::qplot(QWidget *parent)
     }
 
     QApplication::removeTranslator(&trans);
-    trans.load(QFileInfo(qApp->arguments().at(0)).path() + "/QPlot_" + QLocale::system().name()+".qm", ".");
+    bool res = trans.load(QFileInfo(qApp->arguments().at(0)).path() + "/QPlot_" + QLocale::system().name()+".qm", ".");
+
+    if (!res) {
+        QMessageBox::critical(this, tr("Error"), tr("Translations file not exist or not loading."));
+    }
+
     QApplication::installTranslator(&trans);
     ui->retranslateUi(this);
 
-
     new_graph_color = QColor::fromRgb(100, 100, 255);
-
-
-
     update_color_button();
 }
 
@@ -126,21 +125,6 @@ qplot::~qplot()
     delete ui;
 }
 
-double randint(double min = 0, double max = 100, double x = 0)
-{
-    srand(time(NULL) + rand() + x);
-    return (double) (((int) rand() % (int) (max - min)) + min);
-}
-
-double toRad(double x)
-{
-    return x * (M_PI / 180);
-}
-
-double toDeg(double x)
-{
-    return x * (180 / M_PI);
-}
 
 graph_vect qplot::create_graph(QString expression)
 {
@@ -150,10 +134,6 @@ graph_vect qplot::create_graph(QString expression)
     N = (xEnd - xBegin) / step + 2;
 
     mu::Parser p;
-    // p.DefineFun("rnd", randint);
-
-    // p.DefineFun("rad", toRad);
-    // p.DefineFun("deg", toDeg);
 
     p.DefineVar("x", &var_X);
     p.SetExpr(expression.toStdString());
@@ -189,9 +169,7 @@ void qplot::on_btn_add_func_clicked()
         try {
             mu::Parser s;
             double a = 1;
-            // s.DefineFun("rnd", randint);
-            // s.DefineFun("rad", toRad);
-            // s.DefineFun("deg", toDeg);
+
             s.DefineVar("x", &a);
             s.SetExpr(expression.toStdString());
             s.Eval();
@@ -207,17 +185,15 @@ void qplot::on_btn_add_func_clicked()
             ui->le_func->clear();
             this->formuls.push_back(expression);
 
-            QListWidgetItem a = QListWidgetItem();
-            a.setBackground(QBrush(new_graph_color));
-            a.setText("y = " + expression);
+            QString ptoIcon = "";
 #ifdef linux
-            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/function-svgrepo-com.svg"));
+            ptoIcon = "function-svgrepo-com.svg";
 #endif
 
 #ifdef _WIN32
-            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/win/function-svgrepo-com.png"));
+            ptoIcon = "win/function-svgrepo-com.png");
 #endif
-            ui->lv_functions_view->addItem(new QListWidgetItem(a));
+            ui->lv_functions_view->addItem(createElement(expression, new_graph_color, ptoIcon));
 
             graphs.push_back(create_graph(expression));
             ui->plotWidget->addGraph();
@@ -328,16 +304,14 @@ void qplot::load(QString path)
 
         for (int i = 0; i < object.length(); i++) {
 
-            QListWidgetItem a = QListWidgetItem();
-
-            a.setText("y = " + object.keys().at(i));
+            QString ptoIcon = "";
 
 #ifdef linux
-            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/function-svgrepo-com.svg"));
+            ptoIcon = "function-svgrepo-com.svg";
 #endif
 
 #ifdef _WIN32
-            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/win/function-svgrepo-com.png"));
+            ptoIcon = "win/function-svgrepo-com.png";
 #endif
 
             this->formuls.push_back(object.keys().at(i));
@@ -350,8 +324,8 @@ void qplot::load(QString path)
 
             this->colors.push_back(color);
 
-            a.setBackground(QBrush(color));
-            ui->lv_functions_view->addItem(new QListWidgetItem(a));
+
+            ui->lv_functions_view->addItem(createElement(object.keys().at(i), color, ptoIcon));
             ui->plotWidget->addGraph();
         }
 
@@ -395,23 +369,23 @@ void qplot::action_open()
         this->colors = QList<QColor>();
         this->graphs = QList<graph_vect>();
         ui->lv_functions_view->clear();
+        QString expression = "";
+        QString ptIcon = "";
 
         for (int i = 0; i < object.length(); i++) {
-            QListWidgetItem a = QListWidgetItem();
-
 
             if (QFileInfo(object.keys().at(i)).exists()) {
-                a.setText("y = " + QFileInfo(object.keys().at(i)).fileName());
+                expression = QFileInfo(object.keys().at(i)).fileName();
             } else {
-                a.setText("y = " + object.keys().at(i));
+                expression = object.keys().at(i);
             }
 
 #ifdef linux
-            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/function-svgrepo-com.svg"));
+            ptIcon = "function-svgrepo-com.svg";
 #endif
 
 #ifdef _WIN32
-            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/win/function-svgrepo-com.png"));
+            ptIcon = "win/function-svgrepo-com.png")     ;
 #endif
 
             this->formuls.push_back(object.keys().at(i));
@@ -425,8 +399,8 @@ void qplot::action_open()
             color.setGreen(st.at(1).toInt());
             color.setBlue(st.at(2).toInt());
 
-            a.setBackground(QBrush(color));
-            ui->lv_functions_view->addItem(new QListWidgetItem(a));
+
+            ui->lv_functions_view->addItem(createElement(expression, color, ptIcon));
 
             this->colors.push_back(color);
             ui->plotWidget->addGraph();
@@ -542,10 +516,6 @@ void qplot::slotCustomMenuRequested(QPoint pos)
                         mu::Parser s;
 
                         double a = 1;
-                        // s.DefineFun("rnd", randint);
-                        // s.DefineFun("rad", toRad);
-                        // s.DefineFun("deg", toDeg);
-
                         s.DefineVar("x", &a);
                         s.SetExpr(editdialog->getFormul().toStdString());
                         s.Eval();
@@ -561,30 +531,23 @@ void qplot::slotCustomMenuRequested(QPoint pos)
                     this->colors[i] = editdialog->getColor();
                     this->formuls[i] = editdialog->getFormul();
 
+                    QPen pen;
+                    pen.setWidth(1);
+                    pen.setColor(colors.at(i));
 
                     this->graphs[i] = create_graph(this->formuls.at(i));
-
 
                     ui->lv_functions_view->item(i)->setText("y = " + this->formuls.at(i));
 #ifdef linux
                     ui->lv_functions_view->item(i)->setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/function-svgrepo-com.svg"));
 #endif
-
 #ifdef _WIN32
                     ui->lv_functions_view->item(i)->setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/win/function-svgrepo-com.png"));
 #endif
                     ui->lv_functions_view->item(i)->setBackground(QBrush(editdialog->getColor()));
 
-
-
-                    QPen pen;
-                    pen.setWidth(1);
-
                     ui->plotWidget->graph(i)->setData(this->graphs.at(i).x, this->graphs.at(i).y);
-
-                    pen.setColor(colors.at(i));
                     ui->plotWidget->graph(i)->setPen(pen);
-
                     ui->plotWidget->replot();
                     this->isSaveProject = false;
                 }
@@ -597,7 +560,7 @@ void qplot::slotCustomMenuRequested(QPoint pos)
     menu->popup(ui->lv_functions_view->mapToGlobal(pos));
 }
 
-void qplot::on_btn_not_math_clicked(bool checked)
+void qplot::on_btn_not_math_clicked()
 {
     Editor->clear();
 
