@@ -27,6 +27,8 @@ public:
 private slots:
     void on_buttonBox_clicked(QAbstractButton *button);
 
+    void on_new_graph_color_clicked();
+
 private:
     Ui::editDialog *ui;
     QString formul = "";

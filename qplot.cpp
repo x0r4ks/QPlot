@@ -1,30 +1,27 @@
 #include "qplot.h"
+#include "promrules.h"
 #include <QAction>
+#include <QDebug>
 #include <QMessageBox>
 #include <QProcess>
-#include <QDebug>
 #include "ui_qplot.h"
-#include <dlfcn.h>
+#include "formulelement.h"
+#include "qcustomplot.h"
+#include "rootsforms.h"
+void qplot::update_color_button() {
+    QString style = "background-color: rgb(";
+    style += QString::number(new_graph_color.red());
+    style += ",";
+    style += QString::number(new_graph_color.green());
+    style += ",";
+    style += QString::number(new_graph_color.blue());
+    style += ")";
+    ui->new_color->setStyleSheet(style);
+}
 
-double qplot::plugin_load(const char* path, double x)
+double qplot::plugin_load(const char *path, double x)
 {
-    void* obj = dlopen(path, RTLD_NOW);
-    if(obj == NULL) {
-        std::cerr << dlerror() << std::endl;
-        return 0;
-    }
 
-    double (*f)(double);
-    double res = 0;
-    f = (double(*)(double))dlsym(obj, "func");
-
-    if (f == NULL) {
-        std::cerr << dlerror() << std::endl;
-    } else {
-        res = f(x);
-    }
-    dlclose(obj);
-    return res;
 }
 
 qplot::qplot(QWidget *parent)
@@ -32,10 +29,49 @@ qplot::qplot(QWidget *parent)
     , ui(new Ui::qplot)
 {
     ui->setupUi(this);
-    QIcon icon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/appicon.svg");
-    QIcon btn_icon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/pencil.svg");
-    this->setWindowIcon(icon);
-    ui->btn_not_math->setIcon(btn_icon);
+
+
+    // QFile file("stylesheet.qss");
+    // if (file.open(QFile::ReadOnly)) {
+    //     QString styleSheet = QLatin1String(file.readAll());
+
+    //     qApp->setStyleSheet(styleSheet);
+    // }
+
+
+    QString icon_prefis = QFileInfo(qApp->arguments().at(0)).path() + "/icons/";
+
+
+
+
+
+
+#ifdef linux
+    this->setWindowIcon(QIcon(icon_prefis + "appicon.svg"));
+    ui->btn_not_math->setIcon(QIcon(icon_prefis + "pencil.svg"));
+
+    ui->actionCreate->setIcon(QIcon(icon_prefis + "ui/document-new.svg"));
+    ui->actionOpen->setIcon(QIcon(icon_prefis + "ui/document-open.svg"));
+    ui->actionSave->setIcon(QIcon(icon_prefis + "ui/document-save.svg"));
+    ui->actionSave_As->setIcon(QIcon(icon_prefis + "ui/document-save-as.svg"));
+    ui->action_Qt->setIcon(QIcon(icon_prefis + "ui/qt.svg"));
+    ui->action->setIcon(QIcon(icon_prefis+"ui/info.svg"));
+    ui->action_2->setIcon(QIcon(icon_prefis+"ui/info.svg"));
+#endif
+
+#ifdef _WIN32
+    this->setWindowIcon(QIcon(icon_prefis + "win/appicon.png"));
+    ui->btn_not_math->setIcon(QIcon(icon_prefis + "win/pencil.png"));
+
+    ui->actionCreate->setIcon(QIcon(icon_prefis + "win/ui/document-new.png"));
+    ui->actionOpen->setIcon(QIcon(icon_prefis + "win/ui/document-open.png"));
+    ui->actionSave->setIcon(QIcon(icon_prefis + "win/ui/document-save.png"));
+    ui->actionSave_As->setIcon(QIcon(icon_prefis + "win/ui/document-save-as.png"));
+    ui->action_Qt->setIcon(QIcon(icon_prefis + "win/ui/qt.png"));
+    ui->action->setIcon(QIcon(icon_prefis+"win/ui/info.png"));
+    ui->action_2->setIcon(QIcon(icon_prefis+"win/ui/info.png"));
+#endif
+
 
     editdialog = new editDialog(this);
     Editor = new editror(this);
@@ -44,6 +80,8 @@ qplot::qplot(QWidget *parent)
     connect(ui->actionSave_As, &QAction::triggered, this, &qplot::action_save_as);
     connect(ui->actionOpen, &QAction::triggered, this, &qplot::action_open);
     connect(ui->actionCreate, &QAction::triggered, this, &qplot::action_create);
+
+
 
     ui->lv_functions_view->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->lv_functions_view,
@@ -66,15 +104,21 @@ qplot::qplot(QWidget *parent)
 
     ui->plotWidget->replot();
 
-    if (qApp->arguments().size()>1) {
+    if (qApp->arguments().size() > 1) {
         this->load(qApp->arguments().at(1));
     }
 
-
     QApplication::removeTranslator(&trans);
-    trans.load(QFileInfo(qApp->arguments().at(0)).path() + "/QPlot_" + QLocale::system().name(), ".");
+    trans.load(QFileInfo(qApp->arguments().at(0)).path() + "/QPlot_" + QLocale::system().name()+".qm", ".");
     QApplication::installTranslator(&trans);
     ui->retranslateUi(this);
+
+
+    new_graph_color = QColor::fromRgb(100, 100, 255);
+
+
+
+    update_color_button();
 }
 
 qplot::~qplot()
@@ -162,18 +206,28 @@ void qplot::on_btn_add_func_clicked()
         if (flag) {
             ui->le_func->clear();
             this->formuls.push_back(expression);
-            ui->lv_functions_view->addItem("y = " + expression);
+
+            QListWidgetItem a = QListWidgetItem();
+            a.setBackground(QBrush(new_graph_color));
+            a.setText("y = " + expression);
+#ifdef linux
+            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/function-svgrepo-com.svg"));
+#endif
+
+#ifdef _WIN32
+            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/win/function-svgrepo-com.png"));
+#endif
+            ui->lv_functions_view->addItem(new QListWidgetItem(a));
+
             graphs.push_back(create_graph(expression));
             ui->plotWidget->addGraph();
 
             QPen pen;
             pen.setWidth(1);
 
-            unsigned int red = 100, green = 100, blue = 250;
-            red = ui->sb_red->value();
-            green = ui->sb_green->value();
-            blue = ui->sb_blue->value();
-            colors.push_back(QColor(red, green, blue));
+
+
+            colors.push_back(new_graph_color);
 
             for (int i = 0; i < ui->lv_functions_view->count(); i++) {
                 ui->plotWidget->graph(i)->addData(graphs.at(i).x, graphs.at(i).y);
@@ -273,7 +327,18 @@ void qplot::load(QString path)
         ui->lv_functions_view->clear();
 
         for (int i = 0; i < object.length(); i++) {
-            ui->lv_functions_view->addItem("y = " + object.keys().at(i));
+
+            QListWidgetItem a = QListWidgetItem();
+
+            a.setText("y = " + object.keys().at(i));
+
+#ifdef linux
+            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/function-svgrepo-com.svg"));
+#endif
+
+#ifdef _WIN32
+            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/win/function-svgrepo-com.png"));
+#endif
 
             this->formuls.push_back(object.keys().at(i));
             graphs.push_back(create_graph(object.keys().at(i)));
@@ -284,6 +349,9 @@ void qplot::load(QString path)
             color.setBlue(st.at(2).toInt());
 
             this->colors.push_back(color);
+
+            a.setBackground(QBrush(color));
+            ui->lv_functions_view->addItem(new QListWidgetItem(a));
             ui->plotWidget->addGraph();
         }
 
@@ -329,25 +397,36 @@ void qplot::action_open()
         ui->lv_functions_view->clear();
 
         for (int i = 0; i < object.length(); i++) {
+            QListWidgetItem a = QListWidgetItem();
+
+
             if (QFileInfo(object.keys().at(i)).exists()) {
-                ui->lv_functions_view->addItem("y = " + QFileInfo(object.keys().at(i)).fileName());
+                a.setText("y = " + QFileInfo(object.keys().at(i)).fileName());
             } else {
-                ui->lv_functions_view->addItem("y = " + object.keys().at(i));
+                a.setText("y = " + object.keys().at(i));
             }
+
+#ifdef linux
+            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/function-svgrepo-com.svg"));
+#endif
+
+#ifdef _WIN32
+            a.setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/win/function-svgrepo-com.png"));
+#endif
 
             this->formuls.push_back(object.keys().at(i));
 
-            if (QFileInfo(object.keys().at(i)).exists()) {
-                graphs.push_back(create_py_graph(object.keys().at(i)));
-            } else {
-                graphs.push_back(create_graph(object.keys().at(i)));
-            }
+            graphs.push_back(create_graph(object.keys().at(i)));
+
 
             QColor color;
             QList<QString> st = object.value(object.keys().at(i)).toString().split(' ');
             color.setRed(st.at(0).toInt());
             color.setGreen(st.at(1).toInt());
             color.setBlue(st.at(2).toInt());
+
+            a.setBackground(QBrush(color));
+            ui->lv_functions_view->addItem(new QListWidgetItem(a));
 
             this->colors.push_back(color);
             ui->plotWidget->addGraph();
@@ -408,88 +487,110 @@ void qplot::action_create()
 
 void qplot::slotCustomMenuRequested(QPoint pos)
 {
+    QString icon_prefis = QFileInfo(qApp->arguments().at(0)).path() + "/icons/";
+
     QMenu *menu = new QMenu(this);
     QAction *remove_sub_action = new QAction(tr("Remove"), this);
     QAction *edit_sub_menu = new QAction(tr("Edit"), this);
+    // QAction *x_inter = new QAction(tr("Roots"), this);
 
-    menu->addAction(remove_sub_action);
+#ifdef linux
+    remove_sub_action->setIcon(QIcon(icon_prefis+"ui/edit-delete.svg"));
+    edit_sub_menu->setIcon(QIcon(icon_prefis+"ui/document-edit.svg"));
+#endif
+
+#ifdef _WIN32
+    remove_sub_action->setIcon(QIcon(icon_prefis+"win/ui/edit-delete.png"));
+    edit_sub_menu->setIcon(QIcon(icon_prefis+"win/ui/document-edit.png"));
+#endif
+
     menu->addAction(edit_sub_menu);
+    menu->addAction(remove_sub_action);
 
     connect(remove_sub_action, &QAction::triggered, this, [this] {
         int i = ui->lv_functions_view->currentRow();
 
-        QListWidgetItem *it = ui->lv_functions_view->takeItem(ui->lv_functions_view->currentRow());
+        if (i != -1) {
 
-        delete it;
+            QListWidgetItem *it = ui->lv_functions_view->takeItem(ui->lv_functions_view->currentRow());
 
-        this->graphs.removeAt(i);
-        this->colors.removeAt(i);
-        this->formuls.removeAt(i);
-        ui->plotWidget->removeGraph(i);
-        ui->plotWidget->replot();
-        this->isSaveProject = false;
+            delete it;
+
+            this->graphs.removeAt(i);
+            this->colors.removeAt(i);
+            this->formuls.removeAt(i);
+            ui->plotWidget->removeGraph(i);
+            ui->plotWidget->replot();
+            this->isSaveProject = false;
+        } else {
+            QMessageBox::warning(this, tr("Warning"), tr("Nothing to delete"));
+        }
     });
 
     connect(edit_sub_menu, &QAction::triggered, this, [this] {
         int i = ui->lv_functions_view->currentRow();
-        bool f = true;
-        editdialog->setColor(this->colors.at(i));
-        editdialog->setFormul(this->formuls.at(i));
-        if (editdialog->exec()) {
-            try {
-                if (!QFileInfo(editdialog->getFormul()).exists() && \
-                    (QFileInfo(editdialog->getFormul()).path().trimmed() == ".so" || QFileInfo(editdialog->getFormul()).path().trimmed() == ".dll")) {
-                    mu::Parser s;
 
-                    double a = 1;
-                    // s.DefineFun("rnd", randint);
-                    // s.DefineFun("rad", toRad);
-                    // s.DefineFun("deg", toDeg);
+        if (i != -1) {
+            bool f = true;
+            editdialog->setColor(this->colors.at(i));
+            editdialog->setFormul(this->formuls.at(i));
+            if (editdialog->exec()) {
+                try {
+                    if (!QFileInfo(editdialog->getFormul()).exists()
+                        && (QFileInfo(editdialog->getFormul()).path().trimmed() == ".so"
+                            || QFileInfo(editdialog->getFormul()).path().trimmed() == ".dll")) {
+                        mu::Parser s;
 
-                    s.DefineVar("x", &a);
-                    s.SetExpr(editdialog->getFormul().toStdString());
-                    s.Eval();
-                   }
+                        double a = 1;
+                        // s.DefineFun("rnd", randint);
+                        // s.DefineFun("rad", toRad);
+                        // s.DefineFun("deg", toDeg);
 
-            } catch (mu::Parser::exception_type &e) {
-                f = false;
-                QString str = tr("The function you entered is not correct.");
-                str = str + "\n" + QString::fromStdString(e.GetMsg());
-                QMessageBox::critical(this, tr("Error"), str);
-            }
-            if (f) {
-                this->colors[i] = editdialog->getColor();
-                this->formuls[i] = editdialog->getFormul();
+                        s.DefineVar("x", &a);
+                        s.SetExpr(editdialog->getFormul().toStdString());
+                        s.Eval();
+                    }
+
+                } catch (mu::Parser::exception_type &e) {
+                    f = false;
+                    QString str = tr("The function you entered is not correct.");
+                    str = str + "\n" + QString::fromStdString(e.GetMsg());
+                    QMessageBox::critical(this, tr("Error"), str);
+                }
+                if (f) {
+                    this->colors[i] = editdialog->getColor();
+                    this->formuls[i] = editdialog->getFormul();
 
 
-
-                if (QFileInfo(this->formuls.at(i)).exists() || \
-                    (QFileInfo(editdialog->getFormul()).path().trimmed() == ".so" || QFileInfo(editdialog->getFormul()).path().trimmed() == ".dll")) {
-                    this->graphs[i] = create_py_graph(this->formuls.at(i));
-                } else {
                     this->graphs[i] = create_graph(this->formuls.at(i));
-                }
 
-                if (QFileInfo(this->formuls.at(i)).exists() || \
-                    (QFileInfo(editdialog->getFormul()).path().trimmed() == ".so" || QFileInfo(editdialog->getFormul()).path().trimmed() == ".dll")) {
-                    ui->lv_functions_view->item(i)->setText("y = " + QFileInfo(this->formuls.at(i)).fileName());
-                } else {
+
                     ui->lv_functions_view->item(i)->setText("y = " + this->formuls.at(i));
+#ifdef linux
+                    ui->lv_functions_view->item(i)->setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/function-svgrepo-com.svg"));
+#endif
+
+#ifdef _WIN32
+                    ui->lv_functions_view->item(i)->setIcon(QIcon(QFileInfo(qApp->arguments().at(0)).path() + "/icons/win/function-svgrepo-com.png"));
+#endif
+                    ui->lv_functions_view->item(i)->setBackground(QBrush(editdialog->getColor()));
+
+
+
+                    QPen pen;
+                    pen.setWidth(1);
+
+                    ui->plotWidget->graph(i)->setData(this->graphs.at(i).x, this->graphs.at(i).y);
+
+                    pen.setColor(colors.at(i));
+                    ui->plotWidget->graph(i)->setPen(pen);
+
+                    ui->plotWidget->replot();
+                    this->isSaveProject = false;
                 }
-
-
-
-                QPen pen;
-                pen.setWidth(1);
-
-                ui->plotWidget->graph(i)->setData(this->graphs.at(i).x, this->graphs.at(i).y);
-
-                pen.setColor(colors.at(i));
-                ui->plotWidget->graph(i)->setPen(pen);
-
-                ui->plotWidget->replot();
-                this->isSaveProject = false;
             }
+        } else {
+            QMessageBox::warning(this, tr("Warning"), tr("Nothing to change"));
         }
     });
 
@@ -507,65 +608,64 @@ void qplot::on_btn_not_math_clicked(bool checked)
     }
 }
 
-void qplot::on_actionload_python_script_triggered()
+
+void qplot::on_new_color_clicked()
 {
-    QString so_lib_path = QFileDialog::getOpenFileName(this, tr("Open"), "", "SO (*.so);; DLL (*.dll)");
+    new_graph_color = QColorDialog::getColor(new_graph_color, this, tr("Select color"));
+
+    update_color_button();
+
+}
 
 
 
-    ui->le_func->clear();
-    this->formuls.push_back(so_lib_path);
-    ui->lv_functions_view->addItem("y = " + QFileInfo(so_lib_path).fileName());
-    graphs.push_back(create_py_graph(so_lib_path));
-    ui->plotWidget->addGraph();
+void qplot::on_action_Qt_triggered()
+{
+    QMessageBox::aboutQt(this);
+}
 
-    QPen pen;
-    pen.setWidth(1);
 
-    unsigned int red = 100, green = 100, blue = 250;
-    red = ui->sb_red->value();
-    green = ui->sb_green->value();
-    blue = ui->sb_blue->value();
-    colors.push_back(QColor(red, green, blue));
+void qplot::on_action_triggered()
+{
+    QMessageBox::about(this, tr("Information about programm"),
+                       tr("This program is the product of an individual project. "
+                          "It is under the GPLv3 license dated June 29, 2007. "
+                          "The source code of the program is available on the github repository (https://github.com/Thunderb0rn/QPlot/)."
+                          " The code can be used for private purposes, distributed, modified, but making it private is prohibited by the license. "
+                          "The program uses Qt5 for Windows and Qt5/6 for Linux."));
+}
 
-    for (int i = 0; i < ui->lv_functions_view->count(); i++) {
-        ui->plotWidget->graph(i)->addData(graphs.at(i).x, graphs.at(i).y);
+
+void qplot::on_action_2_triggered()
+{
+    PromRules *p = new PromRules();
+
+    p->show();
+}
+
+
+void qplot::update_from_ram()
+{
+    if (points_of_graph != -1) {
+        ui->plotWidget->removeGraph(points_of_graph);
+    }
+    ui->plotWidget->clearGraphs();
+    ui->plotWidget->clearItems();
+
+    for (int i = 0; i < graphs.size(); i++)
+    {
+        QPen pen;
+        pen.setWidth(1);
+
+        ui->plotWidget->addGraph();
+
+        ui->plotWidget->graph(i)->setData(this->graphs.at(i).x, this->graphs.at(i).y);
         pen.setColor(colors.at(i));
         ui->plotWidget->graph(i)->setPen(pen);
     }
 
     ui->plotWidget->replot();
-    this->isSaveProject = false;
+    ui->plotWidget->update();
 
-}
-
-graph_vect qplot::create_py_graph(QString so_lib_path)
-{
-    graph_vect V;
-    double X = xBegin;
-    double var_X = X;
-    N = (xEnd - xBegin) / step + 2;
-
-    void* obj = dlopen(so_lib_path.toStdString().c_str(), RTLD_NOW);
-    if(obj == NULL) {
-        QMessageBox::critical(this, "Critical error", "dlerror, you plugin not support");
-    }
-
-    double (*f)(double);
-    f = (double(*)(double))dlsym(obj, "func");
-
-    if (f == NULL) {
-       QMessageBox::critical(this, "Critical error", "dlerror, you plugin not support");
-       exit(-1);
-    } else {
-        for (X = xBegin; X <= xEnd; X += step) {
-            var_X = X;
-            V.x.push_back(X);
-            V.y.push_back(f(X));
-        }
-    }
-
-    dlclose(obj);
-    return V;
 }
 

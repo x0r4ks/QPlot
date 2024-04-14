@@ -10,12 +10,15 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QColorDialog>
+#include <QColor>
 
+#include <QLocale>
+#include <QTranslator>
 #include "graph_vect.h"
 #include <editdialog.h>
 #include <editror.h>
-#include <QTranslator>
-#include <QLocale>
+#include "qcustomplot.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -46,14 +49,25 @@ private slots:
     void slotCustomMenuRequested(QPoint pos);
 
     void on_btn_not_math_clicked(bool checked);
+    void on_new_color_clicked();
 
-    void on_actionload_python_script_triggered();
+    void on_action_Qt_triggered();
+
+    void on_action_triggered();
+
+    void on_action_2_triggered();
+
+
+
+
+
 
 private:
     Ui::qplot *ui;
-    int N;
+    int N, points_of_graph = -1;
     double xBegin, xEnd, step;
     bool isSaveProject = true;
+    QColor new_graph_color;
     QTranslator trans;
 
     editDialog *editdialog;
@@ -67,9 +81,12 @@ private:
 
     void load(QString path);
 
-    double plugin_load(const char* path, double x);
+    double plugin_load(const char *path, double x);
 
     graph_vect create_graph(QString expression);
-    graph_vect create_py_graph(QString python_script);
+
+
+    void update_color_button();
+    void update_from_ram();
 };
 #endif // QPLOT_H

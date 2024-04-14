@@ -15,8 +15,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
 
-win32:RC_ICONS += ./icons/appicon.svg
-unix:ICON += ./icons/appicon.svg
+
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -87,7 +86,9 @@ HEADERS += \
 FORMS += \
     editdialog.ui \
     editror.ui \
-    qplot.ui
+    promrules.ui \
+    qplot.ui \
+    rootsforms.ui
 
 TRANSLATIONS += \
     QPlot_en_US.ts \
@@ -105,6 +106,16 @@ DISTFILES += \
     muParser.dll
 
 RESOURCES += resources.qrc
+
+HEADERS += \
+    formulelement.h \
+    promrules.h \
+    rootsforms.h
+
+SOURCES += \
+    formulelement.cpp \
+    promrules.cpp \
+    rootsforms.cpp
 
 
 
