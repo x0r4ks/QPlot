@@ -33,15 +33,6 @@ qplot::qplot(QWidget *parent)
 {
     ui->setupUi(this);
 
-
-    // QFile file("stylesheet.qss");
-    // if (file.open(QFile::ReadOnly)) {
-    //     QString styleSheet = QLatin1String(file.readAll());
-
-    //     qApp->setStyleSheet(styleSheet);
-    // }
-
-
     QString icon_prefis = QFileInfo(qApp->arguments().at(0)).path() + "/icons/";
 
 #ifdef linux
@@ -78,8 +69,6 @@ qplot::qplot(QWidget *parent)
     connect(ui->actionSave_As, &QAction::triggered, this, &qplot::action_save_as);
     connect(ui->actionOpen, &QAction::triggered, this, &qplot::action_open);
     connect(ui->actionCreate, &QAction::triggered, this, &qplot::action_create);
-
-
 
     ui->lv_functions_view->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->lv_functions_view,
@@ -124,7 +113,6 @@ qplot::~qplot()
 {
     delete ui;
 }
-
 
 graph_vect qplot::create_graph(QString expression)
 {
@@ -201,8 +189,6 @@ void qplot::on_btn_add_func_clicked()
             QPen pen;
             pen.setWidth(1);
 
-
-
             colors.push_back(new_graph_color);
 
             for (int i = 0; i < ui->lv_functions_view->count(); i++) {
@@ -219,11 +205,6 @@ void qplot::on_btn_add_func_clicked()
 
 void qplot::action_save()
 {
-    /* Save format is json
-     * {
-     *  "formul": {"color": "255, 255, 255"}
-     * }
-    */
     if (project_name != " ") {
         QJsonDocument document;
         QJsonObject s;
@@ -577,16 +558,12 @@ void qplot::on_new_color_clicked()
     new_graph_color = QColorDialog::getColor(new_graph_color, this, tr("Select color"));
 
     update_color_button();
-
 }
-
-
 
 void qplot::on_action_Qt_triggered()
 {
     QMessageBox::aboutQt(this);
 }
-
 
 void qplot::on_action_triggered()
 {
@@ -598,14 +575,12 @@ void qplot::on_action_triggered()
                           "The program uses Qt5 for Windows and Qt5/6 for Linux."));
 }
 
-
 void qplot::on_action_2_triggered()
 {
     PromRules *p = new PromRules();
 
     p->show();
 }
-
 
 void qplot::update_from_ram()
 {
@@ -629,6 +604,5 @@ void qplot::update_from_ram()
 
     ui->plotWidget->replot();
     ui->plotWidget->update();
-
 }
 
